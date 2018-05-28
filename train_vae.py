@@ -28,11 +28,10 @@ args = parser.parse_args()
 
 
 mb_size = 32
-z_dim = 20
-h_dim = 32
-lr = 1e-3
+h_dim = 1000
+lr = 1e-4
 lr_decay_every = 1000000
-n_iter = 100000
+n_iter = 10000000
 log_interval = 1000
 z_dim = h_dim
 c_dim = 2
@@ -80,7 +79,7 @@ def main():
     for it in range(n_iter):
         inputs, labels = dataset.next_batch(args.gpu)
 
-        recon_loss, kl_loss, emb_loss = model.forward(inputs)
+        recon_loss, kl_loss = model.forward(inputs)
         loss = recon_loss + kld_weight * kl_loss
 
         # Anneal kl_weight
