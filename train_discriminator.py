@@ -28,9 +28,9 @@ parser.add_argument('--save', default=False, action='store_true',
 args = parser.parse_args()
 
 
-mbsize = 20
+mbsize = 32
 z_dim = 20
-h_dim = 64
+h_dim = 1000
 lr = 1e-3
 lr_decay_every = 1000000
 n_iter = 5000
@@ -54,7 +54,7 @@ model = RNN_VAE(
 )
 
 # Load pretrained base VAE with c ~ p(c)
-model.load_state_dict(torch.load('models/vae.bin'))
+model.load_state_dict(torch.load('models/cos_vae.bin'))
 
 
 def kl_weight(it):
@@ -104,7 +104,7 @@ def main():
 
         """ Update generator, eq. 8 """
         # Forward VAE with c ~ q(c|x) instead of from prior
-        recon_loss, kl_loss = model.forward(inputs, use_c_prior=False)
+        recon_loss, kl_loss, _ = model.forward(inputs, use_c_prior=False)
         # x_gen: mbsize x seq_len x emb_dim
         x_gen_attr, target_z, target_c = model.generate_soft_embed(batch_size, temp=temp(it))
 
@@ -124,7 +124,7 @@ def main():
         trainer_G.zero_grad()
 
         """ Update encoder, eq. 4 """
-        recon_loss, kl_loss = model.forward(inputs, use_c_prior=False)
+        recon_loss, kl_loss, _ = model.forward(inputs, use_c_prior=False)
 
         loss_E = recon_loss + kl_weight_max * kl_loss
 

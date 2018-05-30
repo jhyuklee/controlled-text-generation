@@ -21,6 +21,7 @@ class RNN_VAE(nn.Module):
         self.START_IDX = start_idx
         self.EOS_IDX = eos_idx
         self.MAX_SENT_LEN = max_sent_len
+        # self.MAX_SENT_LEN = 50
 
         self.n_vocab = n_vocab
         self.h_dim = h_dim
@@ -257,21 +258,21 @@ class RNN_VAE(nn.Module):
         y, emb_out = self.forward_decoder(dec_inputs, z, c)
         emb_target = Variable(self.word_emb(dec_targets)).cuda()
 
-        recon_loss = F.mse_loss(
-            emb_out.view(-1, self.emb_dim), 
-            emb_target.view(-1, self.emb_dim), size_average=True
-        )
+        # recon_loss = F.mse_loss(
+        #     emb_out.view(-1, self.emb_dim), 
+        #     emb_target.view(-1, self.emb_dim), size_average=True
+        # )
 
         # emb_loss = torch.sum(1 - F.cosine_similarity(
         #     emb_out.view(-1, self.emb_dim),
         #     emb_target.view(-1, self.emb_dim)
         # ))
-        # recon_loss = F.cosine_embedding_loss(
-        #     emb_out.view(-1, self.emb_dim), 
-        #     emb_target.view(-1, self.emb_dim),
-        #     Variable(torch.ones(mbsize * seq_len)).cuda(), 
-        #     margin=0.5, size_average=True
-        # )
+        recon_loss = F.cosine_embedding_loss(
+            emb_out.view(-1, self.emb_dim), 
+            emb_target.view(-1, self.emb_dim),
+            Variable(torch.ones(mbsize * seq_len)).cuda(), 
+            margin=0.0, size_average=True
+        )
         # recon_loss = F.cross_entropy(
         #     y.view(-1, self.n_vocab), dec_targets.view(-1), size_average=True
         # )
@@ -321,8 +322,8 @@ class RNN_VAE(nn.Module):
         if raw:
             outputs.append(self.START_IDX)
 
-        emb = self.word_emb(word).view(1, 1, -1)
         for i in range(self.MAX_SENT_LEN):
+            emb = self.word_emb(word).view(1, 1, -1)
             emb = torch.cat([emb, z, c], 2)
 
             output, h = self.decoder(emb, h)
@@ -331,12 +332,12 @@ class RNN_VAE(nn.Module):
             output = output.squeeze(0)
             emb = self.emb_fc(output)
 
-            idx = torch.sum(F.mse_loss(emb.view(-1, self.emb_dim).repeat(self.n_vocab, 1),
-                            self.word_emb.weight, reduce=False), dim=1)
-            idx = torch.argmin(idx)
-            # idx = F.cosine_similarity(emb.view(-1, self.emb_dim), self.word_emb.weight)
-            # idx = torch.argmax(idx)
-            emb = emb.unsqueeze(0)
+            # idx = torch.sum(F.mse_loss(emb.view(-1, self.emb_dim).repeat(self.n_vocab, 1),
+            #                 self.word_emb.weight, reduce=False), dim=1)
+            # idx = torch.argmin(idx)
+            idx = F.cosine_similarity(emb.view(-1, self.emb_dim), self.word_emb.weight)
+            idx = torch.argmax(idx)
+            # emb = emb.unsqueeze(0)
 
             '''
             y = F.softmax(y/temp, dim=0)
@@ -346,6 +347,7 @@ class RNN_VAE(nn.Module):
             '''
 
             idx = int(idx)
+            word = Variable(torch.LongTensor([idx]).cuda())
 
             if not raw and idx == self.EOS_IDX:
                 break

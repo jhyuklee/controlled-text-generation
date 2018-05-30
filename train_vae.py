@@ -115,7 +115,7 @@ def save_model():
     if not os.path.exists('models/'):
         os.makedirs('models/')
 
-    torch.save(model.state_dict(), 'models/vae.bin')
+    torch.save(model.state_dict(), 'models/cos_vae.bin')
 
 
 if __name__ == '__main__':
