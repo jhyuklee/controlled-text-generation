@@ -2,7 +2,7 @@
 Reproducing Hu, et. al., ICML 2017's "Toward Controlled Generation of Text" in PyTorch.
 This work is for University of Bonn's NLP Lab project on Winter Semester 2017/2018.
 
-# Modification from original code
+## Modification from original code
 We modified the softmax layer of VAE. Each GRU time step produces a vector with lenght equal to word embeddings. We tried to minimize distance between pretrained word embeddings (GloVe) and the output of each time step. In this way, we can avoid using softmax layer, and feed the output embedding directly as an input to the next time step. Refer to 'nosoftmax' branch.
 
 ## Requirements
